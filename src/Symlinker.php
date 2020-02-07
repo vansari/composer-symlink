@@ -6,6 +6,7 @@ namespace tools;
 use Composer\Config;
 use Composer\Package\PackageInterface;
 use Composer\Script\Event;
+use InvalidArgumentException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -33,7 +34,15 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class Symlinker {
 
-    private const RELATIVE_SYMLINK = 'rel';
+    public const RELATIVE_SYMLINK = 'rel';
+
+    public const ABSOLUTE_SYMLINK = 'abs';
+
+    private const ALLOWED_TYPES = [
+        self::ABSOLUTE_SYMLINK,
+        self::RELATIVE_SYMLINK,
+    ];
+
 
     /**
      * Creates or replaces symlinks
@@ -69,7 +78,7 @@ class Symlinker {
         foreach ($symlinks as $root => $typeDestinations) {
             $origin = $rootPath . DIRECTORY_SEPARATOR . $root;
             foreach ($typeDestinations as $type => $destinations) {
-                $type = (is_string($type) && self::RELATIVE_SYMLINK) ? $type : null;
+                self::validType($type);
                 foreach ($destinations as $destination) {
                     $destination = $rootPath . DIRECTORY_SEPARATOR . $destination;
                     self::createSymbolicLink($origin, $destination, $type);
@@ -82,13 +91,14 @@ class Symlinker {
      * Creates the symlink by type and remove existing symlink before
      * @param string $absoluteOrigin - absolute origin path
      * @param string $absoluteDestination - absolute destination path for symlink
-     * @param null|int|string $type - 'rel' for relative (Not on WIN Sys) or null|int for absolute (default)
+     * @param string $type - 'rel' for relative (Not on WIN Sys) or null|int for absolute (default)
      */
     public static function createSymbolicLink(
         string $absoluteOrigin,
         string $absoluteDestination,
-        $type = null
+        string $type = self::ABSOLUTE_SYMLINK
     ): void {
+        self::validType($type);
         $filesystem = new Filesystem();
         if ($filesystem->exists($absoluteDestination)) {
             echo 'remove symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
@@ -117,5 +127,19 @@ class Symlinker {
             echo 'create absolute symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
             $filesystem->symlink($absoluteOrigin, $absoluteDestination);
         }
+    }
+
+    /**
+     * Guard for a valid symlink type
+     * @param string $type
+     */
+    private static function validType(string $type): void {
+        if (in_array($type, self::ALLOWED_TYPES)) {
+            return;
+        }
+
+        throw new InvalidArgumentException(
+            'The type for the symlinkpath is unknown: ' . $type
+            . ' (allowed are ' . implode('|', self::ALLOWED_TYPES) . ')');
     }
 }

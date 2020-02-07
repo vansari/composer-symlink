@@ -7,8 +7,11 @@ use Composer\Composer;
 use Composer\Config;
 use Composer\Package\Package;
 use Composer\Script\Event;
+use InvalidArgumentException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Throwable;
+use TypeError;
 
 /**
  * Class SymlinkerTest
@@ -79,19 +82,85 @@ class SymlinkerTest extends TestCase {
      * @param array $destinations
      * @param bool $isFile
      */
-    public function testCreateSymbolicLink(
+    public function testCreateSymbolicLinkRelative(
         string $origin,
         array $destinations,
         bool $isFile = false
     ): void {
         $this->createTestSources($origin, $isFile);
-        foreach ($destinations as $type => $destination) {
+        foreach ($destinations as $destination) {
             Symlinker::createSymbolicLink(
                 self::$testPath . $origin,
                 self::$testPath . $destination,
-                $type
+                Symlinker::RELATIVE_SYMLINK
             );
             $this->assertTrue(is_link(self::$testPath . $destination));
+        }
+    }
+
+    /**
+     * @covers ::createSymbolicLink
+     * @dataProvider getRelativePath
+     * @param string $origin
+     * @param array $destinations
+     * @param bool $isFile
+     */
+    public function testCreateSymbolicLinkAbsolute(
+        string $origin,
+        array $destinations,
+        bool $isFile = false
+    ): void {
+        $this->createTestSources($origin, $isFile);
+        foreach ($destinations as $destination) {
+            Symlinker::createSymbolicLink(
+                self::$testPath . $origin,
+                self::$testPath . $destination,
+                Symlinker::ABSOLUTE_SYMLINK
+            );
+            $this->assertTrue(is_link(self::$testPath . $destination));
+        }
+    }
+
+    /**
+     * @covers ::createSymbolicLink
+     * @dataProvider getRelativePath
+     * @param string $origin
+     * @param array $destinations
+     * @param bool $isFile
+     */
+    public function testCreateSymbolicLinkDefault(
+        string $origin,
+        array $destinations,
+        bool $isFile = false
+    ): void {
+        $this->createTestSources($origin, $isFile);
+        foreach ($destinations as $destination) {
+            Symlinker::createSymbolicLink(
+                self::$testPath . $origin,
+                self::$testPath . $destination
+            );
+            $this->assertTrue(is_link(self::$testPath . $destination));
+        }
+    }
+
+    /**
+     * @covers ::createSymbolicLink
+     */
+    public function testCreateSymbolicLinkThrowException(): void {
+        try {
+            Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', 'ler');
+        } catch (Throwable $exception) {
+            $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+        }
+        try {
+            Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', '');
+        } catch (Throwable $exception) {
+            $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+        }
+        try {
+            Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', 0);
+        } catch (Throwable $exception) {
+            $this->assertInstanceOf(TypeError::class, $exception);
         }
     }
 
@@ -131,7 +200,7 @@ class SymlinkerTest extends TestCase {
         bool $isFile = false
     ): void {
         $this->createTestSources($origin, $isFile);
-        $eventMock = $this->getMock($origin, $destinations);
+        $eventMock = $this->getMock($origin, $destinations, 'abs');
 
         /** @var Event $eventMock */
         Symlinker::createSymlinks($eventMock);
