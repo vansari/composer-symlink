@@ -1,0 +1,20 @@
+{
+    "name": "vansari/composer-symlink",
+    "description": "Creates Symlinks and can be used with your composer in the scripts section",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Kurt Junker",
+            "email": "junker.kurt@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "symfony/filesystem": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "tools\\": "src/"
+        }
+    }
+}
