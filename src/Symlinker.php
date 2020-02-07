@@ -33,11 +33,29 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class Symlinker {
 
+    private const RELATIVE_SYMLINK = 'rel';
+
     /**
-     * Creates new Symlinks
-     * Attention: Removes any existing symlink which are mapped in the "symlinks"-map before
+     * Creates or replaces symlinks
+     * Symlinks must be set in the composer section extra:
+     *  "extra": {
+     *      "symlinks": [
+     *          "sourcepath": [
+     *              "rel": [
+     *                  "path/to/symlinkrel"
+     *              ],
+     *              [
+     *                  "path/to/symlinkabs"
+     *              ]
+     *          ]
+     *      ]
+     *  }
      *
+     * Attention: Removes any existing symlink which are mapped in the "symlinks"-map before
      * Copy the source to target if the OS is WIN
+     *
+     * If the parent directory doesn't exist it will be created
+     *
      * @param Event $event
      */
     public static function createSymlinks(Event $event): void {
@@ -48,46 +66,56 @@ class Symlinker {
         $config = $composer->getConfig();
         $symlinks = (array)$package->getExtra()['symlinks'] ?? [];
         $rootPath = dirname($config->get('vendor-dir'));
-        $filesystem = new Filesystem();
-        foreach ($symlinks as $root => $destinations) {
+        foreach ($symlinks as $root => $typeDestinations) {
             $origin = $rootPath . DIRECTORY_SEPARATOR . $root;
-            foreach ($destinations as $destination) {
-                $destination = $rootPath . DIRECTORY_SEPARATOR . $destination;
-                if ($filesystem->exists($destination)) {
-                    echo 'remove symlink from ' . $origin . ' to ' . $destination . PHP_EOL;
-                    $filesystem->remove($destination);
+            foreach ($typeDestinations as $type => $destinations) {
+                $type = (is_string($type) && self::RELATIVE_SYMLINK) ? $type : null;
+                foreach ($destinations as $destination) {
+                    $destination = $rootPath . DIRECTORY_SEPARATOR . $destination;
+                    self::createSymbolicLink($origin, $destination, $type);
                 }
-                echo 'create symlink from ' . $origin . ' to ' . $destination . PHP_EOL;
-                $filesystem->symlink($origin, $destination, true);
             }
         }
     }
 
     /**
-     * Creates new Symlink from the "symlinks"-map which are not existing
-     * Copy the source to target if the OS is WIN
-     * @param Event $event
+     * Creates the symlink by type and remove existing symlink before
+     * @param string $absoluteOrigin - absolute origin path
+     * @param string $absoluteDestination - absolute destination path for symlink
+     * @param null|int|string $type - 'rel' for relative (Not on WIN Sys) or null|int for absolute (default)
      */
-    public static function updateSymlinks(Event $event): void {
-
-        /** @var PackageInterface $package */
-        $composer = $event->getComposer();
-        $package = $composer->getPackage();
-        /** @var Config $config */
-        $config = $composer->getConfig();
-        $symlinks = (array)$package->getExtra()['symlinks'] ?? [];
-        $rootPath = dirname($config->get('vendor-dir'));
+    public static function createSymbolicLink(
+        string $absoluteOrigin,
+        string $absoluteDestination,
+        $type = null
+    ): void {
         $filesystem = new Filesystem();
-        foreach ($symlinks as $root => $destinations) {
-            $origin = $rootPath . DIRECTORY_SEPARATOR . $root;
-            foreach ($destinations as $destination) {
-                $destination = $rootPath . DIRECTORY_SEPARATOR . $destination;
-                if ($filesystem->exists($destination)) {
-                    continue;
-                }
-                echo 'create missing symlink from ' . $origin . ' to ' . $destination . PHP_EOL;
-                $filesystem->symlink($origin, $destination, true);
+        if ($filesystem->exists($absoluteDestination)) {
+            echo 'remove symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
+            $filesystem->remove($absoluteDestination);
+        }
+        if (
+            self::RELATIVE_SYMLINK === $type
+            && 'WIN' !== strtoupper(substr(php_uname('a'), 0, 3))
+        ) {
+            echo 'create relative symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
+            $newDest = dirname($absoluteDestination);
+            $target = basename($absoluteDestination);
+            if (!$filesystem->exists($newDest)) {
+                $filesystem->mkdir($newDest);
             }
+            $relPath = $filesystem->makePathRelative($absoluteOrigin, dirname($absoluteDestination));
+            exec(
+                sprintf(
+                    'cd %s && ln -s %s %s',
+                    $newDest,
+                    $relPath,
+                    $target
+                )
+            );
+        } else {
+            echo 'create absolute symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
+            $filesystem->symlink($absoluteOrigin, $absoluteDestination);
         }
     }
 }
