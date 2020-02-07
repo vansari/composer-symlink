@@ -10,8 +10,8 @@ composer require vansari/composer-symlink
 
 #### Usage
 
-All paths must be relative from the composer.json file.
-Relative paths must be group at property "rel" as array
+All paths must be relative from the composer.json file.<br>
+Relative paths must be group at property "rel" as array<br>
 Absolute paths must be group with property name "abs" as array
 
 Your Composer JSON:
@@ -21,8 +21,8 @@ Your Composer JSON:
              "vansari/composer-symlink": "^1.0"
          },
          "scripts": {
-            "post-install-cmd": "vansari\\Symlinker::createSymlinks",
-            "post-update-cmd: "vansari\\Symlinker::updateSymlinks"
+            "post-install-cmd": "tools\\Symlinker::createSymlinks",
+            "post-update-cmd: "tools\\Symlinker::updateSymlinks"
          },
          "extra": {
              "symlinks": {
