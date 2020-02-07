@@ -1,7 +1,6 @@
 ### composer-symlink
 Creates Symlinks and can be used with your composer in the scripts section<br>
 
-License: [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.txt)<br>
 
 Installation with composer:
 

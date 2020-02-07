@@ -1,7 +1,7 @@
 {
     "name": "vansari/composer-symlink",
     "description": "Creates Symlinks and can be used with your composer in the scripts section",
-    "license": "Apache-2.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Kurt Junker",
