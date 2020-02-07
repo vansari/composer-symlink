@@ -11,6 +11,8 @@ composer require vansari/composer-symlink
 #### Usage
 
 All paths must be relative from the composer.json file.
+Relative paths must be group at property "rel" as array
+Absolute paths must be group with property name "abs" as array
 
 Your Composer JSON:
  ```composer
@@ -25,14 +27,20 @@ Your Composer JSON:
          "extra": {
              "symlinks": {
                  "origin": [
-                     "target/subdir"
+                     "rel": [
+                         "target/subdir"
+                     ]
                  ],
                  "origin2": [
-                     "target1/subdir",
-                     "target2/subdir"
+                     "rel": [
+                         "target1/subdir",
+                         "target2/subdir"
+                     ]
                  ],
                  "file.php": [
-                     ""target3/symlinked.php"
+                     "abs":[
+                         "target3/symlinked.php"
+                     ]
                  ]
              }
          }
