@@ -10,8 +10,8 @@ composer require vansari/composer-symlink
 
 #### Usage
 
-All paths must be relative from the composer.json file.
-Relative paths must be group at property "rel" as array
+All paths must be relative from the composer.json file.<br>
+Relative paths must be group at property "rel" as array<br>
 Absolute paths must be group with property name "abs" as array
 
 Your Composer JSON:
