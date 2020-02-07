@@ -21,8 +21,8 @@ Your Composer JSON:
              "vansari/composer-symlink": "^1.0"
          },
          "scripts": {
-            "post-install-cmd": "vansari\\Symlinker::createSymlinks",
-            "post-update-cmd: "vansari\\Symlinker::updateSymlinks"
+            "post-install-cmd": "tools\\Symlinker::createSymlinks",
+            "post-update-cmd: "tools\\Symlinker::updateSymlinks"
          },
          "extra": {
              "symlinks": {
