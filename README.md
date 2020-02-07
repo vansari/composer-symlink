@@ -12,7 +12,7 @@ composer require vansari/composer-symlink
 All paths must be relative from the composer.json file.
 
 Your Composer JSON:
- ```json
+ ```composer
      {
          "require": {
              "vansari/composer-symlink": "^1.0"
