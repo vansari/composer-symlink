@@ -124,9 +124,9 @@ class Symlinker {
             $relPath = $filesystem->makePathRelative($absoluteOrigin, dirname($absoluteDestination));
             $cmd = sprintf(
                 'cd %s && ln -s %s %s',
-                $newDest,
-                $relPath . $absoluteOriginFile ?? '',
-                $target
+                preg_replace('/\s/', '\\ ', $newDest),
+                preg_replace('/\s/', '\\ ', ($relPath . $absoluteOriginFile ?? '')),
+                preg_replace('/\s/', '\\ ', $target)
             );
             exec($cmd);
         } else {
