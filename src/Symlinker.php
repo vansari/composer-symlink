@@ -114,15 +114,21 @@ class Symlinker {
             if (!$filesystem->exists($newDest)) {
                 $filesystem->mkdir($newDest);
             }
+            $absoluteOriginFile = null;
+            // if it is a file, remove the filename from $absoluteOrigin,
+            // create $relPath and append the filename on the $relPath
+            if (is_file($absoluteOrigin)) {
+                $absoluteOriginFile = basename($absoluteOrigin);
+                $absoluteOrigin = dirname($absoluteOrigin);
+            }
             $relPath = $filesystem->makePathRelative($absoluteOrigin, dirname($absoluteDestination));
-            exec(
-                sprintf(
-                    'cd %s && ln -s %s %s',
-                    $newDest,
-                    $relPath,
-                    $target
-                )
+            $cmd = sprintf(
+                'cd %s && ln -s %s %s',
+                $newDest,
+                $relPath . $absoluteOriginFile ?? '',
+                $target
             );
+            exec($cmd);
         } else {
             echo 'create absolute symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
             $filesystem->symlink($absoluteOrigin, $absoluteDestination);

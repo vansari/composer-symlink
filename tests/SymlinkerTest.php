@@ -324,12 +324,15 @@ class SymlinkerTest extends TestCase {
      */
     private function createTestSources(string $origin, bool $isFile): void {
         $testDir = self::$testPath . $origin;
+//        echo 'TEST RESOURCE ' . $testDir . PHP_EOL;
         if (!$isFile && !is_dir($testDir)) {
             mkdir($testDir, 0777, true);
+//            echo 'CREATED TEST DIRECTORY ' . $testDir . PHP_EOL;
             self::$created[] = $testDir;
         }
         if ($isFile) {
             touch($testDir);
+//            echo 'CREATED TEST FILE ' . $testDir . PHP_EOL;
             self::$created[] = $testDir;
         }
     }
