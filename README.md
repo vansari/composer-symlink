@@ -26,22 +26,22 @@ Your Composer JSON:
          },
          "extra": {
              "symlinks": {
-                 "origin": [
+                 "origin": {
                      "rel": [
                          "target/subdir"
                      ]
-                 ],
-                 "origin2": [
+                 },
+                 "origin2": {
                      "rel": [
                          "target1/subdir",
                          "target2/subdir"
                      ]
-                 ],
-                 "file.php": [
+                 },
+                 "file.php": {
                      "abs":[
                          "target3/symlinked.php"
                      ]
-                 ]
+                 }
              }
          }
      }
