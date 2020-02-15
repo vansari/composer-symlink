@@ -48,16 +48,16 @@ class Symlinker {
      * Creates or replaces symlinks
      * Symlinks must be set in the composer section extra:
      *  "extra": {
-     *      "symlinks": [
-     *          "sourcepath": [
+     *      "symlinks": {
+     *          "sourcepath": {
      *              "rel": [
      *                  "path/to/symlinkrel"
      *              ],
-     *              [
+     *              "abs": [
      *                  "path/to/symlinkabs"
      *              ]
-     *          ]
-     *      ]
+     *          }
+     *      }
      *  }
      *
      * Attention: Removes any existing symlink which are mapped in the "symlinks"-map before
@@ -91,7 +91,7 @@ class Symlinker {
      * Creates the symlink by type and remove existing symlink before
      * @param string $absoluteOrigin - absolute origin path
      * @param string $absoluteDestination - absolute destination path for symlink
-     * @param string $type - 'rel' for relative (Not on WIN Sys) or null|int for absolute (default)
+     * @param string $type - 'rel' for relative (Not on WIN Sys) or 'abs' for absolute (default)
      */
     public static function createSymbolicLink(
         string $absoluteOrigin,
