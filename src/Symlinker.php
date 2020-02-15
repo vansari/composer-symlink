@@ -98,7 +98,11 @@ class Symlinker {
         string $absoluteDestination,
         string $type = self::ABSOLUTE_SYMLINK
     ): void {
+        // Guards
+        self::nonEmptyString($absoluteOrigin);
+        self::nonEmptyString($absoluteDestination);
         self::validType($type);
+
         $filesystem = new Filesystem();
         if ($filesystem->exists($absoluteDestination)) {
             echo 'remove symlink from ' . $absoluteOrigin . ' to ' . $absoluteDestination . PHP_EOL;
@@ -147,5 +151,13 @@ class Symlinker {
         throw new InvalidArgumentException(
             'The type for the symlinkpath is unknown: ' . $type
             . ' (allowed are ' . implode('|', self::ALLOWED_TYPES) . ')');
+    }
+
+    private static function nonEmptyString(string $input): void {
+        if ('' !== trim($input)) {
+            return;
+        }
+
+        throw new InvalidArgumentException('The passed variable must be an non empty string');
     }
 }
