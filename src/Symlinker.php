@@ -118,7 +118,6 @@ class Symlinker {
         self::nonEmptyString($absoluteDestination);
         self::validType($type);
 
-        $filesystem = new Filesystem();
         if (self::RELATIVE_SYMLINK === $type && false === self::isWindows()) {
             self::createSymbolicLinkRelative($absoluteOrigin, $absoluteDestination);
         } else {
@@ -140,6 +139,10 @@ class Symlinker {
             . ' (allowed are ' . implode('|', self::ALLOWED_TYPES) . ')');
     }
 
+    /**
+     * Ensure that the given string is not empty
+     * @param string $input
+     */
     private static function nonEmptyString(string $input): void {
         if ('' !== trim($input)) {
             return;
@@ -172,7 +175,14 @@ class Symlinker {
             $absoluteOrigin = dirname($absoluteOrigin);
         }
         $relPath = $filesystem->makePathRelative($absoluteOrigin, dirname($absoluteDestination));
-        $filesystem->symlink($relPath . $absoluteOriginFile ?? '', $absoluteDestination);
+        // Remove trailing slash if $absoluteOriginFile is null
+        $modifiedOrigin = (null === $absoluteOriginFile ? rtrim($relPath, '/\\') : $relPath)
+            . $absoluteOriginFile ?? '';
+
+        $filesystem->symlink(
+            $modifiedOrigin,
+            $absoluteDestination
+        );
     }
 
     /**
@@ -188,9 +198,9 @@ class Symlinker {
             // try to create symlink also on Win System and if it fails, try to copy the files
             $filesystem->symlink($absoluteOrigin, $absoluteDestination);
         } catch (\Throwable $exception) {
+            echo 'could not create absolute symlink. Message is: ' . $exception->getMessage();
             if (self::isWindows()) {
-                echo 'could not create absolute symlink. Message is: ' . $exception->getMessage();
-                echo 'could not create symlink on WIN System, try to copy origin to destination...' . PHP_EOL;
+                echo 'WIN System: try to copy origin to destination...' . PHP_EOL;
                 // Filesystem::mirror doesn't handle files as parameter,
                 // it will throw UnexpectedValueException : RecursiveDirectoryIterator::__construct
                 // So we will remove the existing destination file and copy the origin file to destination
@@ -199,8 +209,6 @@ class Symlinker {
                     return;
                 }
                 $filesystem->symlink($absoluteOrigin, $absoluteDestination, true);
-            } else {
-                echo 'could not create absolute symlink. Message is: ' . $exception->getMessage();
             }
         }
     }
