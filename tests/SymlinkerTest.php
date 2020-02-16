@@ -87,6 +87,9 @@ class SymlinkerTest extends TestCase {
         array $destinations,
         bool $isFile = false
     ): void {
+        if (Symlinker::isWindows()) {
+            $this->markTestSkipped('No symbolic links with relative Path supported on WIN.');
+        }
         $this->createTestSources($origin, $isFile);
         foreach ($destinations as $destination) {
             Symlinker::createSymbolicLink(
@@ -94,7 +97,7 @@ class SymlinkerTest extends TestCase {
                 self::$testPath . $destination,
                 Symlinker::RELATIVE_SYMLINK
             );
-            $this->assertTrue(is_link(self::$testPath . $destination));
+                $this->assertTrue(is_link(self::$testPath . $destination));
         }
     }
 
@@ -117,7 +120,11 @@ class SymlinkerTest extends TestCase {
                 self::$testPath . $destination,
                 Symlinker::ABSOLUTE_SYMLINK
             );
-            $this->assertTrue(is_link(self::$testPath . $destination));
+            if (Symlinker::isWindows()) {
+                $this->assertTrue(is_dir(self::$testPath . $destination));
+            } else {
+                $this->assertTrue(is_link(self::$testPath . $destination));
+            }
         }
     }
 
@@ -139,29 +146,52 @@ class SymlinkerTest extends TestCase {
                 self::$testPath . $origin,
                 self::$testPath . $destination
             );
-            $this->assertTrue(is_link(self::$testPath . $destination));
+            if (Symlinker::isWindows()) {
+                $this->assertTrue(is_dir(self::$testPath . $destination));
+            } else {
+                $this->assertTrue(is_link(self::$testPath . $destination));
+            }
         }
     }
 
     /**
      * @covers ::createSymbolicLink
      */
-    public function testCreateSymbolicLinkThrowException(): void {
+    public function testCreateSymbolicLinkThrowExceptionWithInvalidTypes(): void {
         try {
             Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', 'ler');
+            $this->fail('Did not throw the expected Exception!');
         } catch (Throwable $exception) {
             $this->assertInstanceOf(InvalidArgumentException::class, $exception);
         }
         try {
             Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', '');
+            $this->fail('Did not throw the expected Exception!');
         } catch (Throwable $exception) {
             $this->assertInstanceOf(InvalidArgumentException::class, $exception);
         }
         try {
             Symlinker::createSymbolicLink('foo/bar', 'foo/baz/bar', 0);
+            $this->fail('Did not throw the expected Exception!');
         } catch (Throwable $exception) {
             $this->assertInstanceOf(TypeError::class, $exception);
         }
+    }
+
+    /**
+     * Test the correct throwing of the exception if origin path is empty
+     */
+    public function testCreateSymbolicLinkThrowExceptionWithEmptyOriginPath(): void {
+        $this->expectException(InvalidArgumentException::class);
+        Symlinker::createSymbolicLink('', dirname(__FILE__));
+    }
+
+    /**
+     * Test the correct throwing of the exception if destination path is empty
+     */
+    public function testCreateSymbolicLinkThrowExceptionWithEmptyDestinationPath(): void {
+        $this->expectException(InvalidArgumentException::class);
+        Symlinker::createSymbolicLink(dirname(__FILE__), '');
     }
 
     /**
@@ -176,6 +206,9 @@ class SymlinkerTest extends TestCase {
         array $destinations,
         bool $isFile = false
     ): void {
+        if (Symlinker::isWindows()) {
+            $this->markTestSkipped('No symbolic links with relative Path supported on WIN.');
+        }
         $this->createTestSources($origin, $isFile);
         $eventMock = $this->getMock($origin, $destinations, 'rel');
 
@@ -206,7 +239,17 @@ class SymlinkerTest extends TestCase {
         Symlinker::createSymlinks($eventMock);
 
         foreach ($destinations as $destination) {
-            $this->assertTrue(is_link(self::$testPath . $destination));
+            if (Symlinker::isWindows()) {
+                $this->assertTrue(
+                    (
+                        $isFile
+                            ? is_file(self::$testPath . $destination)
+                            : is_dir(self::$testPath . $destination)
+                    )
+                );
+            } else {
+                $this->assertTrue(is_link(self::$testPath . $destination));
+            }
         }
     }
 
@@ -307,13 +350,11 @@ class SymlinkerTest extends TestCase {
                         continue;
                     }
                     if (is_file($path) || is_link($path)) {
-//                        echo 'DELETE FILE/SYMLINK ' . $path . PHP_EOL;
                         unlink($path);
                     }
                 }
                 closedir($handle);
             }
-//            echo 'DELETE DIRECTORY ' . $dir . PHP_EOL;
             rmdir($dir);
         }
     }
@@ -324,15 +365,12 @@ class SymlinkerTest extends TestCase {
      */
     private function createTestSources(string $origin, bool $isFile): void {
         $testDir = self::$testPath . $origin;
-//        echo 'TEST RESOURCE ' . $testDir . PHP_EOL;
         if (!$isFile && !is_dir($testDir)) {
             mkdir($testDir, 0777, true);
-//            echo 'CREATED TEST DIRECTORY ' . $testDir . PHP_EOL;
             self::$created[] = $testDir;
         }
         if ($isFile) {
             touch($testDir);
-//            echo 'CREATED TEST FILE ' . $testDir . PHP_EOL;
             self::$created[] = $testDir;
         }
     }
